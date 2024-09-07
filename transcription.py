@@ -1,33 +1,16 @@
 import tkinter
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
 from tkinter import ttk
 import whisper
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 
 
 model = whisper.load_model("base")
 filepath = ""
 filedest = ""
 
-def text_to_pdf(text, output_filename):
-    pdf = canvas.Canvas(output_filename, pagesize=letter)
 
-    pdf.setFont("Helvetica", 12)
-    width, height = letter
-    y_position = height - 40
-    lines = text.splitlines()
-
-    for line in lines:
-        if y_position < 40:
-            pdf.showPage()
-            pdf.setFont("Helvetica", 12)
-            y_position = height - 40
-        pdf.drawString(40, y_position, line)
-        y_position -= 14
-
-    pdf.save()
 def openDestination():
     global filedest
     filedest = filedialog.askdirectory()
@@ -36,42 +19,45 @@ def openDestination():
 def openDirectory():
     global filepath
     filepath = filedialog.askopenfilename()
-    templabel = ttk.Label(mainframe, text=filepath).grid(column=1, row=2, sticky=(N, S))
+    templabel = tkinter.Label(window, text=filepath).grid(column=1, row=2, sticky=(N, S))
     return filepath
 
 def transcribe_audio(audio_path):
     result = model.transcribe(audio_path)
     return result['text']
-def transcribe_text(doc_type):
+def transcribe_text():
     global filepath
     print("This is the filepath: " + filepath)
     audio_path = filepath
     transcribed_text = transcribe_audio(audio_path)
     file = open(filedest + "/transcription.txt", "w")
     file.write(transcribed_text)
+    messagebox.showinfo("Success!",message="Transcription succeeded!")
 
-def transcribe_pdf():
-    global filepath
-    print("This is the filepath: " + filepath)
-    audio_path = filepath
-    transcribed_text = transcribe_audio(audio_path)
-    text_to_pdf(transcribed_text, filedest + "/transcription_output.pdf")
 
 
 window = Tk()
 window.title("Transcriptor")
-mainframe = ttk.Frame(window, padding="20")
-mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+window.configure(bg="#273746", padx="20", pady="20")
 window.columnconfigure(0, weight=1)
 window.rowconfigure(0, weight=1)
 
-button = ttk.Button(mainframe, text="Choose directory", command=openDirectory)
-label = ttk.Label(mainframe, text="Chose the directory of your audio file: ")
-label.grid(column=1, row=1, sticky=(W))
-button.grid(column=2, row=1, sticky=(N))
+dirFrame = tkinter.Frame()
+label = tkinter.Label(window, text="AI Transcription Tool", font=("Arial, 25"), bg="#273746", fg="white")
+button = tkinter.Button(dirFrame, text="Choose directory", padx="20", font=("Arial, 8"), bg="#273746", fg="white", command=openDirectory)
+dir_text = tkinter.Label(dirFrame, text="Chose the directory of your audio file: ", font=("Arial, 8"), bg="#273746", fg="white")
+dirFrame.configure(background="#273746", padx="10", pady="10", highlightthickness="5", highlightbackground="white")
 
-destination = ttk.Label(mainframe, text="Chose the transcription destination: ").grid(column=1, row=3, sticky=N)
-destbutton = ttk.Button(mainframe, text="Destination", command=openDestination).grid(column=2, row=3, sticky=N)
-transcribetext_button = ttk.Button(mainframe, text="Transcribe to Text", command=transcribe_text).grid(column=1, row=4, sticky=N)
-transcribepdf_button = ttk.Button(mainframe, text="Transcribe to PDF", command=transcribe_pdf).grid(column=2, row=4, sticky=N)
+destination = tkinter.Label(window, text="Chose the transcription destination: ", font=("Arial, 8"), bg="#273746", fg="white")
+destbutton = tkinter.Button(window, text="Destination", font=("Arial, 8"), bg="#273746", fg="white", padx="20")
+transcribetext_button = tkinter.Button(window, text="Transcribe to Text", font=("Arial, 8"), bg="#273746", fg="white", command=transcribe_text)
+
+#Grid manipulation
+label.grid(column=1, row=1, rowspan=2)
+dirFrame.grid(column=1, row=3)
+dir_text.grid(column=1, row=3, padx=5)
+button.grid(column=2, row=3, padx=5)
+destination.grid(column=1, row=5)
+destbutton.grid(column=2, row=5)
+transcribetext_button.grid(column=1, row=6)
 window.mainloop()
